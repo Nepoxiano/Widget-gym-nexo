@@ -1,0 +1,4 @@
+NOTA IMPORTANTE:
+Al inicializar el proyecto de React con Vite, el comando 'create-vite --overwrite' eliminó el contenido original de esta carpeta.
+Hemos recuperado y regenerado los archivos de texto de las rutinas (.docx) a partir de los datos en caché.
+Si necesitas el archivo PDF original ('En blanco 11.pdf') o los audios de WhatsApp (.ogg), los mismos se encuentran en tu carpeta de descargas original desde donde descomprimiste o copiaste este proyecto.
