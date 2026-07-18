@@ -2,7 +2,6 @@ import { MOCK_ALUMNOS, MOCK_EJERCICIOS, MOCK_RUTINAS_PREDEFINIDAS, MOCK_RUTINAS_
 
 class GristConnector {
   constructor() {
-    this.isGristAvailable = typeof window !== 'undefined' && window.grist !== undefined;
     this.localState = {
       Alumnos: JSON.parse(localStorage.getItem('nexo_gym_alumnos')) || MOCK_ALUMNOS,
       Ejercicios: JSON.parse(localStorage.getItem('nexo_gym_ejercicios')) || MOCK_EJERCICIOS,
@@ -11,18 +10,30 @@ class GristConnector {
     };
   }
 
+  // Dynamically check if we are embedded in Grist iframe and Grist API script is loaded
+  isGristAvailable() {
+    if (typeof window === 'undefined') return false;
+    
+    // Custom widgets in Grist are ALWAYS embedded inside an iframe.
+    // If window.self === window.top, the widget is being accessed standalone (outside Grist).
+    const isEmbedded = window.self !== window.top;
+    const hasGristScript = window.grist !== undefined;
+    
+    return isEmbedded && hasGristScript;
+  }
+
   // Initialize Grist
   ready(options = { requiredAccess: 'read table' }) {
-    if (this.isGristAvailable) {
+    if (this.isGristAvailable()) {
       window.grist.ready(options);
     } else {
-      console.log('Grist API not detected, running in Standalone (Mock) mode.');
+      console.log('Running in Standalone (Simulation) mode.');
     }
   }
 
   // Subscribe to table changes (or trigger callback immediately in mock mode)
   subscribe(tableName, callback) {
-    if (this.isGristAvailable) {
+    if (this.isGristAvailable()) {
       window.grist.onRecords((records) => {
         callback(this._formatRecords(records));
       });
@@ -33,7 +44,7 @@ class GristConnector {
 
   // Generic method to fetch all data from a table
   async fetchTable(tableName) {
-    if (this.isGristAvailable) {
+    if (this.isGristAvailable()) {
       try {
         const records = await window.grist.docApi.fetchTable(tableName);
         return this._formatRecords(records);
@@ -49,7 +60,6 @@ class GristConnector {
   // Prepare fields for Grist (maps 'ID' to Grist's column 'ID2', strips Grist row 'id')
   _prepareFields(fields) {
     const prepared = { ...fields };
-    // Remove both lowercase 'id' and uppercase 'ID2' to prevent conflicts
     delete prepared.id;
     delete prepared.ID2;
     
@@ -65,15 +75,10 @@ class GristConnector {
   _formatRecords(records) {
     if (!records) return [];
     
-    // Check if records is a Grist-specific envelope `{ id, fields: { ... } }` or flat `{ id, ID2, ... }`
-    // Widget API uses `{ id: X, fields: { ... } }`
-    // docApi.fetchTable/REST returns `{ id: X, ID2: '...', Nombre: '...' }` or `{ id: X, fields: { ... } }`
     return records.map(r => {
       const fields = r.fields || r;
       const formatted = { id: r.id, ...fields };
       
-      // Grist renames 'ID' column to 'ID2' in Python/formula schema to avoid conflict with row 'id'.
-      // We map Grist's 'ID2' back to 'ID' for internal React logic.
       if ('ID2' in formatted) {
         formatted.ID = formatted.ID2;
       }
@@ -83,15 +88,11 @@ class GristConnector {
 
   // Update records in Grist or local storage
   async updateRecords(tableName, records) {
-    if (this.isGristAvailable) {
+    if (this.isGristAvailable()) {
       try {
-        // Grist updateRecords expects array of: { id: rowId, fields: { ... } }
         const gristRecords = records.map(r => {
           const fields = r.fields || r;
           const rowId = r.id || fields.id;
-          if (!rowId) {
-            console.error("Missing row 'id' for record update:", r);
-          }
           return {
             id: rowId,
             fields: this._prepareFields(fields)
@@ -126,9 +127,8 @@ class GristConnector {
 
   // Add records to Grist or local storage
   async addRecords(tableName, records) {
-    if (this.isGristAvailable) {
+    if (this.isGristAvailable()) {
       try {
-        // Grist addRecords expects array of: { fields: { ... } }
         const gristRecords = records.map(r => ({
           fields: this._prepareFields(r.fields || r)
         }));
@@ -156,9 +156,8 @@ class GristConnector {
 
   // Delete records in Grist or local storage
   async deleteRecords(tableName, recordIds) {
-    if (this.isGristAvailable) {
+    if (this.isGristAvailable()) {
       try {
-        // Grist deleteRecords expects array of Grist row IDs: [rowId1, rowId2]
         await window.grist.docApi.deleteRecords(tableName, recordIds);
         return true;
       } catch (err) {
