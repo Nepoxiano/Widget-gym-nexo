@@ -80,7 +80,7 @@ export default function AdminWidget() {
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     const success = await connector.updateRecords('Alumnos', [
-      { id: selectedAlumno.ID, fields: editForm }
+      { id: selectedAlumno.id, fields: editForm }
     ]);
     if (success) {
       setIsEditingProfile(false);
@@ -171,7 +171,7 @@ export default function AdminWidget() {
     );
     if (!confirmClear) return;
     
-    const idsToDelete = studentExercises.map(se => se.ID);
+    const idsToDelete = studentExercises.map(se => se.id);
     const success = await connector.deleteRecords('Rutinas_Alumnos', idsToDelete);
     if (success) {
       loadAllData();
@@ -610,10 +610,10 @@ export default function AdminWidget() {
                         </h3>
                         <div className="space-y">
                           {dayExercises.map(item => {
-                            const isEditing = editingExerciseId === item.ID;
+                            const isEditing = editingExerciseId === item.id;
                             return (
                               <div
-                                key={item.ID}
+                                key={item.id}
                                 style={{
                                   background: 'rgba(255,255,255,0.01)',
                                   border: '1px solid var(--border)',
@@ -640,7 +640,7 @@ export default function AdminWidget() {
                                         className="btn btn-secondary"
                                         style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
                                         onClick={() => {
-                                          setEditingExerciseId(item.ID);
+                                          setEditingExerciseId(item.id);
                                           setEditExerciseForm({ ...item });
                                         }}
                                       >
@@ -649,7 +649,7 @@ export default function AdminWidget() {
                                       <button
                                         className="btn btn-danger"
                                         style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
-                                        onClick={() => handleDeleteExercise(item.ID)}
+                                        onClick={() => handleDeleteExercise(item.id)}
                                       >
                                         🗑️
                                       </button>
