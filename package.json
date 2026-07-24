@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "server": "tsx src/server/local.ts",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
@@ -12,15 +13,22 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@hono/node-server": "^2.0.11",
+    "@libsql/client": "^0.17.4",
+    "bcrypt-ts": "^9.0.1",
+    "hono": "^4.12.32",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
+    "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "gh-pages": "^6.3.0",
     "oxlint": "^1.71.0",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2",
     "vite": "^8.1.1"
   }
 }
