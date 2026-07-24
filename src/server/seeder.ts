@@ -17,7 +17,7 @@ export async function initDb() {
       )
     `);
 
-    // Alumnos Table
+    // Alumnos Table (including new contact columns)
     await db.execute(`
       CREATE TABLE IF NOT EXISTS alumnos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,9 +33,33 @@ export async function initDb() {
         detalle_lesion TEXT,
         enfermedades TEXT,
         restricciones_medicas TEXT,
-        deportes TEXT
+        deportes TEXT,
+        dni TEXT,
+        celular TEXT,
+        direccion TEXT,
+        mail TEXT
       )
     `);
+
+    // Safely apply migrations for existing databases that were created without the new columns
+    const columnsToMigrate = [
+      { name: 'dni', type: 'TEXT' },
+      { name: 'celular', type: 'TEXT' },
+      { name: 'direccion', type: 'TEXT' },
+      { name: 'mail', type: 'TEXT' }
+    ];
+
+    for (const col of columnsToMigrate) {
+      try {
+        await db.execute(`ALTER TABLE alumnos ADD COLUMN ${col.name} ${col.type}`);
+        console.log(`Column '${col.name}' added to table 'alumnos' successfully.`);
+      } catch (e: any) {
+        // SQLite will throw an error if the column already exists, which we safely ignore
+        if (!e.message.includes('duplicate column name') && !e.message.includes('already exists')) {
+          console.warn(`Attempted to add column '${col.name}':`, e.message);
+        }
+      }
+    }
 
     // Ejercicios Table
     await db.execute(`
@@ -80,7 +104,7 @@ export async function initDb() {
       console.log('Seeding user: talia');
       const passHash = await hash('nexo2026', 10);
       await db.execute({
-        sql: 'INSERT INTO users (username, password_hash, name, role) VALUES (?, ?, ?, ?)',
+        sql: 'INSERT OR IGNORE INTO users (username, password_hash, name, role) VALUES (?, ?, ?, ?)',
         args: ['talia', passHash, 'Talia Peralta', 'professor']
       });
     }
@@ -134,7 +158,6 @@ export async function initDb() {
         ["Hip thrust", "Piernas (Glúteos)"],
         ["Abducción de cadera", "Piernas (Glúteos)"],
         // Gemelos & Core
-        ["Elevación de talón", "Gemelos"],
         ["Gemelos", "Gemelos"],
         ["Abdominales", "Core"],
         ["Plancha", "Core"]
@@ -153,16 +176,16 @@ export async function initDb() {
     if (alumnoCount === 0) {
       console.log('Seeding sample students...');
       const defaultAlumnos = [
-        ["Pamela", "Gómez", 28, "Intermedio", "5 días", "Turno mañana", "Tonificación", "Alta", "No", "", "", "", "Pilates"],
-        ["Juan", "Sánchez", 35, "Principiante", "3 días", "Turno tarde", "Aumentar fuerza", "Alta", "Sí", "Molestia en hombro derecho", "Ninguna", "No hacer press militar con cargas elevadas", "Fútbol"],
-        ["María", "López", 42, "Avanzado", "3 días", "Turno mañana", "Perder peso", "Baja", "No", "", "", "", ""],
-        ["Carlos", "Pérez", 21, "Principiante", "4 días", "Turno tarde", "Hipertrofia", "Alta", "No", "", "", "", "Rugby"],
+        ["Pamela", "Gómez", 28, "Intermedio", "5 días", "Turno mañana", "Tonificación", "Alta", "No", "", "", "", "Pilates", "34555666", "1165849302", "Av. Del Libertador 1200, CABA", "pamela.gomez@gmail.com"],
+        ["Juan", "Sánchez", 35, "Principiante", "3 días", "Turno tarde", "Aumentar fuerza", "Alta", "Sí", "Molestia en hombro derecho", "Ninguna", "No hacer press militar con cargas elevadas", "Fútbol", "29888777", "1154329876", "Calle Florida 450, CABA", "juan.sanchez@yahoo.com.ar"],
+        ["María", "López", 42, "Avanzado", "3 días", "Turno mañana", "Perder peso", "Baja", "No", "", "", "", "", "21777888", "1167678989", "Av. Rivadavia 5300, CABA", "maria.lopez@outlook.com"],
+        ["Carlos", "Pérez", 21, "Principiante", "4 días", "Turno tarde", "Hipertrofia", "Alta", "No", "", "", "", "Rugby", "40999888", "1134215678", "Av. Santa Fe 2800, CABA", "carlos.perez@gmail.com"],
       ];
       for (const row of defaultAlumnos) {
         await db.execute({
           sql: `INSERT INTO alumnos (
-            nombre, apellido, edad, nivel, dias_entrenamiento, horario, objetivo, estado, lesionado, detalle_lesion, enfermedades, restricciones_medicas, deportes
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            nombre, apellido, edad, nivel, dias_entrenamiento, horario, objetivo, estado, lesionado, detalle_lesion, enfermedades, restricciones_medicas, deportes, dni, celular, direccion, mail
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           args: row
         });
       }
@@ -170,7 +193,6 @@ export async function initDb() {
       // 5. Seed Rutinas Alumnos if alumnos were just created
       console.log('Seeding custom student routines...');
       
-      // Get student IDs
       const pamelaRes = await db.execute("SELECT id FROM alumnos WHERE nombre = 'Pamela' AND apellido = 'Gómez'");
       const juanRes = await db.execute("SELECT id FROM alumnos WHERE nombre = 'Juan' AND apellido = 'Sánchez'");
       const pamelaId = pamelaRes.rows[0].id;

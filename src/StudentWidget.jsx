@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from './apiClient';
 
-export default function StudentWidget() {
+export default function StudentWidget({ onBack }) {
   const [alumnos, setAlumnos] = useState([]);
   const [ejercicios, setEjercicios] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,12 +51,10 @@ export default function StudentWidget() {
       try {
         localStorage.setItem('nexo_selected_student', selectedAlumnoId);
         
-        // Fetch detailed profile + custom routine
         const data = await apiClient.get(`/api/alumnos/${selectedAlumnoId}/routine`);
         setActiveStudent(data.student);
         setActiveStudentRoutine(data.routine);
         
-        // Load completed progress for this student
         const savedCompleted = localStorage.getItem(`nexo_completed_${selectedAlumnoId}`);
         if (savedCompleted) {
           setCompletedExercises(JSON.parse(savedCompleted));
@@ -64,7 +62,6 @@ export default function StudentWidget() {
           setCompletedExercises({});
         }
 
-        // Set default active tab
         if (data.routine.length > 0) {
           const uniqueDays = [...new Set(data.routine.map(r => r.Dia))].sort((a, b) => {
             return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
@@ -75,7 +72,6 @@ export default function StudentWidget() {
         }
       } catch (err) {
         console.error('Error loading routine:', err);
-        // Clear selection on error
         setSelectedAlumnoId('');
       } finally {
         setLoading(false);
@@ -119,9 +115,14 @@ export default function StudentWidget() {
 
   return (
     <div className="container">
-      {/* Header */}
-      <header className="app-header glass-panel">
-        <div className="logo-container">
+      {/* Header (Hidden during printing) */}
+      <header className="app-header glass-panel screen-only">
+        <div 
+          className="logo-container" 
+          onClick={onBack}
+          style={{ cursor: 'pointer' }}
+          title="Volver al Inicio"
+        >
           <img 
             src="/logo.jpg" 
             alt="Logo Nexo Gym" 
@@ -131,23 +132,44 @@ export default function StudentWidget() {
           <span className="logo-text" style={{ fontSize: '1.4rem' }}>Nexo Gym</span>
           <span className="badge badge-student">Alumnos</span>
         </div>
-        {selectedAlumnoId && (
-          <button className="btn btn-secondary" onClick={() => setSelectedAlumnoId('')}>
-            Cambiar Alumno
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {selectedAlumnoId && (
+            <>
+              <button 
+                className="btn btn-success" 
+                onClick={() => window.print()} 
+                style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                title="Descargar Rutina Completa en PDF"
+              >
+                📥 PDF
+              </button>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setSelectedAlumnoId('')} 
+                style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+              >
+                Cambiar Alumno
+              </button>
+            </>
+          )}
+          {!selectedAlumnoId && (
+            <button className="btn btn-secondary" onClick={onBack} style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}>
+              Volver
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Loading state */}
       {loading && (
-        <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-muted)' }}>
+        <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-muted)' }} className="screen-only">
           <h3>Cargando rutina...</h3>
         </div>
       )}
 
       {/* Student Selection Screen */}
       {!loading && !activeStudent && (
-        <div className="glass-panel fade-in" style={{ padding: '2rem', maxWidth: '600px', margin: '2rem auto' }}>
+        <div className="glass-panel fade-in screen-only" style={{ padding: '2rem', maxWidth: '600px', margin: '2rem auto' }}>
           <h2 style={{ marginBottom: '1.5rem', textAlign: 'center', color: 'var(--primary)' }}>
             Busca tu Ficha de Entrenamiento
           </h2>
@@ -177,8 +199,8 @@ export default function StudentWidget() {
               ) : filteredAlumnos.length > 0 ? (
                 filteredAlumnos.map(student => (
                   <div
-                    key={student.ID}
-                    onClick={() => setSelectedAlumnoId(student.ID)}
+                    key={student.id}
+                    onClick={() => setSelectedAlumnoId(student.id)}
                     style={{
                       padding: '1rem',
                       background: 'var(--bg-card)',
@@ -220,9 +242,9 @@ export default function StudentWidget() {
         </div>
       )}
 
-      {/* Routine View Screen */}
+      {/* Routine View Screen (Interactive) */}
       {!loading && activeStudent && (
-        <div className="space-y fade-in">
+        <div className="space-y fade-in screen-only">
           {/* Student Profile Info Panel */}
           <div className="glass-panel" style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
@@ -288,7 +310,7 @@ export default function StudentWidget() {
               <div className="glass-panel" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Progreso de hoy ({activeTab}):</span>
                 {(() => {
-                  const dayExercises = exercisesForActiveDay.map(e => e.ID);
+                  const dayExercises = exercisesForActiveDay.map(e => e.id);
                   const completedCount = dayExercises.filter(id => completedExercises[id]).length;
                   const totalCount = dayExercises.length;
                   const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
@@ -309,19 +331,19 @@ export default function StudentWidget() {
               {/* Exercises List */}
               <div className="space-y" style={{ marginTop: '0.5rem' }}>
                 {exercisesForActiveDay.map(item => {
-                  const isChecked = !!completedExercises[item.ID];
+                  const isChecked = !!completedExercises[item.id];
                   const muscleGroup = getExerciseGroup(item.Ejercicio);
                   
                   return (
                     <div
-                      key={item.ID}
+                      key={item.id}
                       className={`checkbox-container ${isChecked ? 'checked' : ''} fade-in`}
-                      onClick={() => handleToggleExercise(item.ID)}
+                      onClick={() => handleToggleExercise(item.id)}
                     >
                       <input
                         type="checkbox"
                         checked={isChecked}
-                        onChange={() => {}} // handled by container click
+                        onChange={() => {}}
                       />
                       <div className="checkmark"></div>
                       <div style={{ flex: 1 }}>
@@ -364,6 +386,136 @@ export default function StudentWidget() {
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* --- PRINT-ONLY ENTIRE ROUTINE SHEET --- */}
+      {!loading && activeStudent && (
+        <div className="print-only" style={{ padding: '2rem', background: '#ffffff', color: '#111111' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1.5rem',
+            borderBottom: '3px solid #1b4d3e',
+            paddingBottom: '1.5rem',
+            marginBottom: '2rem'
+          }}>
+            <img 
+              src="/logo.jpg" 
+              alt="Logo" 
+              style={{ height: '70px', width: '70px', borderRadius: '50%', objectFit: 'cover' }} 
+            />
+            <div>
+              <h1 style={{ fontSize: '2.2rem', color: '#1b4d3e', margin: 0, fontWeight: '800', letterSpacing: '1px' }}>
+                NEXO GYM
+              </h1>
+              <p style={{ fontSize: '0.9rem', color: '#495057', margin: '0.2rem 0 0 0', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                Ficha Técnica de Entrenamiento
+              </p>
+            </div>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '1.5rem',
+            background: '#f8f9fa',
+            padding: '1.25rem',
+            borderRadius: '6px',
+            border: '1px solid #dee2e6',
+            marginBottom: '2rem',
+            fontSize: '0.95rem'
+          }}>
+            <div>
+              <p style={{ margin: '0 0 0.5rem 0' }}><strong>Alumno:</strong> {activeStudent.Nombre} {activeStudent.Apellido}</p>
+              <p style={{ margin: 0 }}><strong>Nivel:</strong> {activeStudent.Nivel}</p>
+            </div>
+            <div>
+              <p style={{ margin: '0 0 0.5rem 0' }}><strong>Objetivo Principal:</strong> {activeStudent.Objetivo}</p>
+              <p style={{ margin: '0 0 0.5rem 0' }}><strong>Frecuencia:</strong> {activeStudent.DiasEntrenamiento}</p>
+              <p style={{ margin: 0 }}><strong>Horario preferido:</strong> {activeStudent.Horario}</p>
+            </div>
+          </div>
+
+          {activeStudent.Lesionado === 'Sí' && (
+            <div style={{
+              border: '1px solid #c92a2a',
+              background: '#fff5f5',
+              padding: '1rem',
+              borderRadius: '6px',
+              color: '#c92a2a',
+              marginBottom: '2rem',
+              fontSize: '0.9rem'
+            }}>
+              <strong style={{ display: 'block', marginBottom: '0.5rem' }}>⚠️ RESTRICCIONES MÉDICAS / REGISTRO DE LESIONES:</strong>
+              {activeStudent.DetalleLesion && <p style={{ margin: '0 0 0.25rem 0' }}><strong>Detalle:</strong> {activeStudent.DetalleLesion}</p>}
+              {activeStudent.RestriccionesMedicas && <p style={{ margin: '0 0 0.25rem 0' }}><strong>Restricciones:</strong> {activeStudent.RestriccionesMedicas}</p>}
+              {activeStudent.Enfermedades && <p style={{ margin: 0 }}><strong>Observaciones:</strong> {activeStudent.Enfermedades}</p>}
+            </div>
+          )}
+
+          {routineDays.length > 0 ? (
+            routineDays.map(day => {
+              const dayExercises = activeStudentRoutine
+                .filter(r => r.Dia === day)
+                .sort((a, b) => (Number(a.Orden) || 0) - (Number(b.Orden) || 0));
+
+              return (
+                <div key={day} style={{ marginBottom: '2.5rem', pageBreakInside: 'avoid' }}>
+                  <h3 style={{
+                    fontSize: '1.25rem',
+                    color: '#1b4d3e',
+                    borderBottom: '2px solid #1b4d3e',
+                    paddingBottom: '0.4rem',
+                    marginBottom: '1rem',
+                    fontWeight: '700'
+                  }}>
+                    {day}
+                  </h3>
+                  <table style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    textAlign: 'left',
+                    fontSize: '0.9rem'
+                  }}>
+                    <thead>
+                      <tr style={{ background: '#f1f3f5', borderBottom: '2px solid #dee2e6' }}>
+                        <th style={{ padding: '0.6rem 0.8rem', width: '40%' }}>Ejercicio</th>
+                        <th style={{ padding: '0.6rem 0.8rem', width: '15%' }}>Grupo</th>
+                        <th style={{ padding: '0.6rem 0.8rem', width: '20%' }}>Series / Reps</th>
+                        <th style={{ padding: '0.6rem 0.8rem', width: '25%' }}>Notas / Indicaciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dayExercises.map((item, idx) => (
+                        <tr key={item.id} style={{ borderBottom: '1px solid #dee2e6', background: idx % 2 === 0 ? '#ffffff' : '#f8f9fa' }}>
+                          <td style={{ padding: '0.6rem 0.8rem' }}><strong>{item.Ejercicio}</strong></td>
+                          <td style={{ padding: '0.6rem 0.8rem' }}>{getExerciseGroup(item.Ejercicio)}</td>
+                          <td style={{ padding: '0.6rem 0.8rem' }}>{item.Series_Repeticiones}</td>
+                          <td style={{ padding: '0.6rem 0.8rem', color: item.Notas ? '#d9480f' : '#868e96' }}>
+                            {item.Notas || '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })
+          ) : (
+            <p style={{ textAlign: 'center', marginTop: '2rem', color: '#868e96' }}>No hay ejercicios registrados en esta rutina.</p>
+          )}
+
+          <div style={{
+            marginTop: '3rem',
+            borderTop: '1px solid #dee2e6',
+            paddingTop: '1rem',
+            textAlign: 'center',
+            fontSize: '0.8rem',
+            color: '#868e96'
+          }}>
+            Rutina generada digitalmente por el Sistema Nexo Gym. Entrena seguro y respeta las cargas indicadas por tu profesor.
+          </div>
         </div>
       )}
     </div>

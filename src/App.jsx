@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Welcome from './components/Welcome';
 import StudentWidget from './StudentWidget';
 import AdminWidget from './AdminWidget';
 import Login from './components/Login';
@@ -22,9 +23,7 @@ export default function App() {
     const handleAuthChange = () => {
       setIsAuthenticated(apiClient.isAuthenticated());
       setUser(apiClient.getUser());
-      
-      const newPath = apiClient.isAuthenticated() ? '/admin' : '/login';
-      navigate(newPath);
+      navigate('/');
     };
 
     window.addEventListener('api-unauthorized', handleAuthChange);
@@ -56,12 +55,16 @@ export default function App() {
     apiClient.logout();
     setIsAuthenticated(false);
     setUser(null);
-    navigate('/login');
+    navigate('/');
   };
 
   // Simple client-side router
   const renderRoute = () => {
-    if (currentPath.startsWith('/admin')) {
+    if (currentPath === '/alumnos') {
+      return <StudentWidget onBack={() => navigate('/')} />;
+    }
+
+    if (currentPath === '/admin') {
       if (!isAuthenticated) {
         return <Login onLoginSuccess={handleLoginSuccess} />;
       }
@@ -75,57 +78,12 @@ export default function App() {
       return <Login onLoginSuccess={handleLoginSuccess} />;
     }
 
-    // Default route: Student View
-    return <StudentWidget />;
+    // Default route: Welcome Screen
+    return <Welcome onSelectRole={(role) => navigate(role === 'student' ? '/alumnos' : '/admin')} />;
   };
 
   return (
     <div>
-      {/* Floating navigation options for convenience */}
-      <div style={{
-        position: 'fixed',
-        bottom: '1rem',
-        right: '1rem',
-        zIndex: 9999,
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border)',
-        borderRadius: '30px',
-        padding: '0.4rem 0.8rem',
-        display: 'flex',
-        gap: '0.5rem',
-        boxShadow: 'var(--shadow-md)',
-        fontSize: '0.75rem'
-      }}>
-        <button 
-          onClick={() => navigate('/')} 
-          style={{
-            background: currentPath === '/' ? 'var(--primary)' : 'transparent',
-            color: currentPath === '/' ? 'var(--primary-text)' : 'var(--text-primary)',
-            border: 'none',
-            borderRadius: '20px',
-            padding: '0.2rem 0.6rem',
-            cursor: 'pointer',
-            fontWeight: '600'
-          }}
-        >
-          Alumno
-        </button>
-        <button 
-          onClick={() => navigate('/admin')} 
-          style={{
-            background: currentPath.startsWith('/admin') ? 'var(--primary)' : 'transparent',
-            color: currentPath.startsWith('/admin') ? 'var(--primary-text)' : 'var(--text-primary)',
-            border: 'none',
-            borderRadius: '20px',
-            padding: '0.2rem 0.6rem',
-            cursor: 'pointer',
-            fontWeight: '600'
-          }}
-        >
-          Profesor
-        </button>
-      </div>
-
       {renderRoute()}
     </div>
   );

@@ -51,7 +51,11 @@ const mapAlumno = (row: any) => ({
   DetalleLesion: row.detalle_lesion || '',
   Enfermedades: row.enfermedades || '',
   RestriccionesMedicas: row.restricciones_medicas || '',
-  Deportes: row.deportes || ''
+  Deportes: row.deportes || '',
+  Dni: row.dni || '',
+  Celular: row.celular || '',
+  Direccion: row.direccion || '',
+  Mail: row.mail || ''
 });
 
 const mapEjercicio = (row: any) => ({
@@ -208,8 +212,8 @@ app.post('/api/admin/alumnos', async (c) => {
 
     const res = await db.execute({
       sql: `INSERT INTO alumnos (
-        nombre, apellido, edad, nivel, dias_entrenamiento, horario, objetivo, estado, lesionado, detalle_lesion, enfermedades, restricciones_medicas, deportes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        nombre, apellido, edad, nivel, dias_entrenamiento, horario, objetivo, estado, lesionado, detalle_lesion, enfermedades, restricciones_medicas, deportes, dni, celular, direccion, mail
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         body.Nombre,
         body.Apellido,
@@ -223,7 +227,11 @@ app.post('/api/admin/alumnos', async (c) => {
         body.DetalleLesion || '',
         body.Enfermedades || '',
         body.RestriccionesMedicas || '',
-        body.Deportes || ''
+        body.Deportes || '',
+        body.Dni || '',
+        body.Celular || '',
+        body.Direccion || '',
+        body.Mail || ''
       ]
     });
 
@@ -247,7 +255,7 @@ app.put('/api/admin/alumnos/:id', async (c) => {
     
     await db.execute({
       sql: `UPDATE alumnos SET 
-        nombre = ?, apellido = ?, edad = ?, nivel = ?, dias_entrenamiento = ?, horario = ?, objetivo = ?, estado = ?, lesionado = ?, detalle_lesion = ?, enfermedades = ?, restricciones_medicas = ?, deportes = ?
+        nombre = ?, apellido = ?, edad = ?, nivel = ?, dias_entrenamiento = ?, horario = ?, objetivo = ?, estado = ?, lesionado = ?, detalle_lesion = ?, enfermedades = ?, restricciones_medicas = ?, deportes = ?, dni = ?, celular = ?, direccion = ?, mail = ?
         WHERE id = ?`,
       args: [
         body.Nombre,
@@ -263,11 +271,24 @@ app.put('/api/admin/alumnos/:id', async (c) => {
         body.Enfermedades || '',
         body.RestriccionesMedicas || '',
         body.Deportes || '',
+        body.Dni || '',
+        body.Celular || '',
+        body.Direccion || '',
+        body.Mail || '',
         id
       ]
     });
 
     const updatedRes = await db.execute({
+      sql: 'SELECT * FROM alumnos WHERE id = ?',
+      args: [id]
+    });
+
+    return c.json(mapAlumno(updatedRes.rows[0]));
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
+  }
+});
       sql: 'SELECT * FROM alumnos WHERE id = ?',
       args: [id]
     });
@@ -439,6 +460,61 @@ app.delete('/api/admin/alumnos/:id/routine', async (c) => {
     await db.execute({
       sql: 'DELETE FROM rutinas_alumnos WHERE alumno_id = ?',
       args: [alumnoId]
+    });
+    return c.json({ success: true });
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// --- PROTECTED ADMIN ENDPOINTS FOR EXERCISES (ABM) ---
+
+// Create exercise
+app.post('/api/admin/ejercicios', async (c) => {
+  try {
+    const { Nombre, GrupoMuscular } = await c.req.json();
+    if (!Nombre || !GrupoMuscular) {
+      return c.json({ error: 'Nombre y Grupo muscular son obligatorios' }, 400);
+    }
+    const res = await db.execute({
+      sql: 'INSERT INTO ejercicios (nombre, grupo_muscular) VALUES (?, ?)',
+      args: [Nombre, GrupoMuscular]
+    });
+    const newId = Number(res.lastInsertRowid);
+    return c.json({ id: newId, ID: String(newId), Nombre, GrupoMuscular }, 201);
+  } catch (err: any) {
+    if (err.message.includes('UNIQUE constraint failed')) {
+      return c.json({ error: 'Ya existe un ejercicio registrado con ese nombre.' }, 409);
+    }
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// Edit exercise
+app.put('/api/admin/ejercicios/:id', async (c) => {
+  try {
+    const id = c.req.param('id');
+    const { Nombre, GrupoMuscular } = await c.req.json();
+    if (!Nombre || !GrupoMuscular) {
+      return c.json({ error: 'Nombre y Grupo muscular son obligatorios' }, 400);
+    }
+    await db.execute({
+      sql: 'UPDATE ejercicios SET nombre = ?, grupo_muscular = ? WHERE id = ?',
+      args: [Nombre, GrupoMuscular, id]
+    });
+    return c.json({ id: Number(id), ID: String(id), Nombre, GrupoMuscular });
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// Delete exercise
+app.delete('/api/admin/ejercicios/:id', async (c) => {
+  try {
+    const id = c.req.param('id');
+    await db.execute({
+      sql: 'DELETE FROM ejercicios WHERE id = ?',
+      args: [id]
     });
     return c.json({ success: true });
   } catch (err: any) {

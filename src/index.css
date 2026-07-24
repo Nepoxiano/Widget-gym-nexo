@@ -414,3 +414,230 @@ body {
 .status-alta { background-color: var(--success); }
 .status-baja { background-color: var(--text-muted); }
 .status-lesionado { background-color: var(--danger); }
+
+/* --- PRINT RULES --- */
+.print-only {
+  display: none !important;
+}
+
+@media print {
+  .screen-only {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+  
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+  }
+  
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Ensure clean table rendering on PDF */
+  table {
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+}
+
+/* --- MOBILE RESPONSIVE OPTIMIZATIONS --- */
+@media (max-width: 768px) {
+  .app-header {
+    padding: 1rem 0.75rem;
+    margin-bottom: 1.25rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  
+  .logo-text {
+    font-size: 1.15rem !important;
+  }
+  
+  .logo-image {
+    height: 32px !important;
+    width: 32px !important;
+  }
+  
+  .badge {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.35rem;
+  }
+  
+  .container {
+    padding: 0 0.5rem 2rem 0.5rem;
+  }
+  
+  .grid-cols-2 {
+    gap: 1.25rem;
+  }
+  
+  h1 { font-size: 1.6rem !important; }
+  h2 { font-size: 1.25rem !important; }
+  
+  .btn {
+    padding: 0.5rem 0.85rem;
+    font-size: 0.75rem;
+  }
+
+  /* Make day list navigation horizontal-scrollable on mobile touch screens */
+  div[style*="overflowX: auto"] {
+    scrollbar-width: none; /* Firefox */
+  }
+  div[style*="overflowX: auto"]::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
+  
+  /* Responsive form grids in panels */
+  form div[style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+}
+
+/* --- SIDEBAR & DATA TABLE STYLES --- */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-main);
+}
+
+.sidebar {
+  width: 280px;
+  min-width: 280px;
+  background-color: #ffffff;
+  border-right: 1px solid var(--border);
+  padding: 2.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+}
+
+.main-content {
+  flex: 1;
+  padding: 2.5rem;
+  overflow-y: auto;
+  min-width: 0; /* Prevent flex children from overflowing */
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0.8rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  gap: 0.5rem;
+}
+
+.sidebar-nav-item:hover {
+  background-color: var(--bg-card-hover);
+  color: var(--primary);
+}
+
+.sidebar-nav-item.active {
+  background-color: var(--primary);
+  color: var(--primary-text) !important;
+}
+
+/* Data Table UI */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  background-color: #ffffff;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-top: 1rem;
+}
+
+.data-table th {
+  background-color: #f8f9fa;
+  padding: 0.85rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.data-table td {
+  padding: 0.85rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.data-table tbody tr:hover {
+  background-color: var(--bg-card-hover);
+}
+
+/* Sidebar Responsive Adapting */
+@media (max-width: 768px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100% !important;
+    min-width: 100% !important;
+    height: auto !important;
+    position: relative !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border) !important;
+    padding: 1.25rem 1rem !important;
+    top: auto;
+  }
+  
+  .main-content {
+    padding: 1.25rem 0.75rem !important;
+  }
+  
+  .sidebar-nav {
+    flex-direction: row !important;
+    overflow-x: auto;
+    gap: 0.35rem;
+    padding-bottom: 0.25rem;
+  }
+  
+  .sidebar-nav-item {
+    white-space: nowrap;
+    padding: 0.55rem 0.85rem !important;
+    font-size: 0.75rem !important;
+    width: auto !important;
+  }
+}
+
+
