@@ -9,6 +9,7 @@ export default function AdminWidget({ onLogout }) {
   
   // Navigation State
   const [activeMenu, setActiveMenu] = useState('rutinas'); // 'rutinas' | 'alumnos' | 'ejercicios'
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Routine planner states
   const [selectedAlumnoId, setSelectedAlumnoId] = useState('');
@@ -1324,9 +1325,61 @@ export default function AdminWidget({ onLogout }) {
   // --- MAIN LAYOUT RENDER ---
   return (
     <div className="admin-layout">
+      {/* Mobile Top Bar (Hidden on Desktop) */}
+      <header className="mobile-admin-header screen-only">
+        <button 
+          onClick={() => setIsSidebarOpen(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '1.75rem',
+            color: 'var(--primary)',
+            cursor: 'pointer',
+            padding: '0.25rem',
+            lineHeight: 1
+          }}
+          title="Abrir Menú"
+        >
+          ☰
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <img src="/logo.jpg" alt="Logo" style={{ height: '30px', width: '30px', borderRadius: '50%', objectFit: 'cover' }} />
+          <strong style={{ fontSize: '0.95rem', color: 'var(--primary)', letterSpacing: '0.5px' }}>NEXO GYM</strong>
+        </div>
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>
+          Prof. Talia
+        </div>
+      </header>
+
+      {/* Sidebar Backdrop overlay on mobile when open */}
+      {isSidebarOpen && (
+        <div 
+          className="sidebar-backdrop screen-only" 
+          onClick={() => setIsSidebarOpen(false)}
+        ></div>
+      )}
+
       {/* Sidebar Navigation */}
-      <aside className="sidebar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem' }}>
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+        {/* Mobile-only close button header */}
+        <div className="sidebar-mobile-header" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '1.5rem',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              padding: '0.25rem'
+            }}
+            title="Cerrar Menú"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2.5rem' }} className="sidebar-logo-area">
           <img 
             src="/logo.jpg" 
             alt="Logo Nexo Gym" 
@@ -1337,7 +1390,7 @@ export default function AdminWidget({ onLogout }) {
           </span>
         </div>
         
-        <div style={{ marginBottom: '2rem', paddingBottom: '1.25rem', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ marginBottom: '2rem', paddingBottom: '1.25rem', borderBottom: '1px solid var(--border)' }} className="sidebar-user-area">
           <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>
             Profesor Activo
           </span>
@@ -1347,26 +1400,26 @@ export default function AdminWidget({ onLogout }) {
         <nav className="sidebar-nav">
           <button 
             className={`sidebar-nav-item ${activeMenu === 'rutinas' ? 'active' : ''}`}
-            onClick={() => setActiveMenu('rutinas')}
+            onClick={() => { setActiveMenu('rutinas'); setIsSidebarOpen(false); }}
           >
             📋 Planificación de Rutinas
           </button>
           <button 
             className={`sidebar-nav-item ${activeMenu === 'alumnos' ? 'active' : ''}`}
-            onClick={() => setActiveMenu('alumnos')}
+            onClick={() => { setActiveMenu('alumnos'); setIsSidebarOpen(false); }}
           >
             👥 Directorio de Alumnos
           </button>
           <button 
             className={`sidebar-nav-item ${activeMenu === 'ejercicios' ? 'active' : ''}`}
-            onClick={() => setActiveMenu('ejercicios')}
+            onClick={() => { setActiveMenu('ejercicios'); setIsSidebarOpen(false); }}
           >
             🏋️ Catálogo de Ejercicios
           </button>
         </nav>
 
         <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
-          <button className="btn btn-secondary" style={{ width: '100%', padding: '0.5rem', fontSize: '0.8rem' }} onClick={onLogout}>
+          <button className="btn btn-secondary" style={{ width: '100%', padding: '0.5rem', fontSize: '0.8rem' }} onClick={() => { onLogout(); setIsSidebarOpen(false); }}>
             Cerrar Sesión
           </button>
         </div>
