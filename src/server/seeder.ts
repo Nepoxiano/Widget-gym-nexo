@@ -170,17 +170,39 @@ export async function initDb() {
       }
     }
 
-    // 4. Seed Alumnos if empty
+    // 4. Wipe old mock database entries if they are present (Pamela, Juan, etc.)
+    const oldCheck = await db.execute("SELECT COUNT(*) as count FROM alumnos WHERE nombre = 'Pamela' AND apellido = 'Gómez'");
+    if (Number(oldCheck.rows[0].count) > 0) {
+      console.log('Old sample students found. Wiping tables for clean real data seed...');
+      await db.execute('DELETE FROM rutinas_alumnos');
+      await db.execute('DELETE FROM alumnos');
+    }
+
+    // Seed Alumnos if empty
     const alumnoCheck = await db.execute('SELECT COUNT(*) as count FROM alumnos');
     const alumnoCount = Number(alumnoCheck.rows[0].count);
     if (alumnoCount === 0) {
-      console.log('Seeding sample students...');
+      console.log('Seeding real students from list...');
       const defaultAlumnos = [
-        ["Pamela", "Gómez", 28, "Intermedio", "5 días", "Turno mañana", "Tonificación", "Alta", "No", "", "", "", "Pilates", "34555666", "1165849302", "Av. Del Libertador 1200, CABA", "pamela.gomez@gmail.com"],
-        ["Juan", "Sánchez", 35, "Principiante", "3 días", "Turno tarde", "Aumentar fuerza", "Alta", "Sí", "Molestia en hombro derecho", "Ninguna", "No hacer press militar con cargas elevadas", "Fútbol", "29888777", "1154329876", "Calle Florida 450, CABA", "juan.sanchez@yahoo.com.ar"],
-        ["María", "López", 42, "Avanzado", "3 días", "Turno mañana", "Perder peso", "Baja", "No", "", "", "", "", "21777888", "1167678989", "Av. Rivadavia 5300, CABA", "maria.lopez@outlook.com"],
-        ["Carlos", "Pérez", 21, "Principiante", "4 días", "Turno tarde", "Hipertrofia", "Alta", "No", "", "", "", "Rugby", "40999888", "1134215678", "Av. Santa Fe 2800, CABA", "carlos.perez@gmail.com"],
+        ["Maite", "", 17, "Principiante", "3 días", "Turno mañana", "Tonificación", "Alta", "Sí", "Detalle de lesión pendiente", "", "", "", "", "", "", ""],
+        ["Sabrina", "Pages", 43, "Avanzado", "3 días", "Turno mañana", "Hipertrofia", "Alta", "No", "", "", "", "", "", "", "", ""],
+        ["Belen", "Di Benedetto", 31, "Principiante", "3 días", "Turno mañana", "Hipertrofia", "Alta", "No", "", "", "", "", "", "", "", ""],
+        ["Maria", "Gonzalez", 44, "Principiante", "3 días", "Turno mañana", "Perder peso", "Alta", "No", "", "", "", "", "", "", "", ""],
+        ["Stefania", "Aspetia", 26, "Intermedio", "3 días", "Turno mañana", "Tonificación", "Alta", "Sí", "Detalle de lesión pendiente", "", "", "", "", "", "", ""],
+        ["Saniuk", "Nahir", 21, "Principiante", "3 días", "Turno mañana", "Hipertrofia", "Alta", "No", "", "", "", "", "", "", "", ""],
+        ["Natalia", "Laplace", 45, "Principiante", "3 días", "Turno mañana", "Tonificación", "Alta", "Sí", "Detalle de lesión pendiente", "", "", "", "", "", "", ""],
+        ["Lucia", "Zarandona", 22, "Principiante", "3 días", "Turno mañana", "Tonificación", "Alta", "No", "", "", "", "", "", "", "", ""],
+        ["Facundo", "Rodriguez", 23, "Principiante", "3 días", "Turno mañana", "Hipertrofia", "Alta", "No", "", "", "", "", "", "", "", ""],
+        ["Ludmila", "Alvarez", 25, "Intermedio", "3 días", "Turno mañana", "Tonificación", "Alta", "No", "", "", "", "", "", "", "", ""],
+        ["Gloria", "Rios", 51, "Avanzado", "3 días", "Turno mañana", "Perder peso", "Alta", "No", "", "", "", "", "", "", "", ""],
+        ["Ayelen", "Candia", 26, "Intermedio", "3 días", "Turno mañana", "Tonificación", "Alta", "Sí", "Detalle de lesión pendiente", "", "", "", "", "", "", ""],
+        ["Romagnoli", "Gonzalo", 32, "Principiante", "3 días", "Turno mañana", "Hipertrofia", "Alta", "Sí", "Detalle de lesión pendiente", "", "", "", "", "", "", ""],
+        ["Stefania", "Pogger", 39, "Intermedio", "3 días", "Turno mañana", "Hipertrofia", "Alta", "No", "", "", "", "", "", "", "", ""],
+        ["Buzeta", "Graciela", 47, "Intermedio", "3 días", "Turno mañana", "Tonificación", "Alta", "No", "", "", "", "", "", "", "", ""],
+        ["Trentini", "Graciela", 47, "Intermedio", "3 días", "Turno mañana", "Tonificación", "Alta", "No", "", "", "", "", "", "", "", ""],
+        ["Ledesma", "Camila", 22, "Principiante", "3 días", "Turno mañana", "Tonificación", "Alta", "Sí", "Detalle de lesión pendiente", "", "", "", "", "", "", ""]
       ];
+
       for (const row of defaultAlumnos) {
         await db.execute({
           sql: `INSERT INTO alumnos (
@@ -190,63 +212,26 @@ export async function initDb() {
         });
       }
 
-      // 5. Seed Rutinas Alumnos if alumnos were just created
-      console.log('Seeding custom student routines...');
+      // 5. Seed basic custom routine for Sabrina Pages
+      console.log('Seeding custom student routine for Sabrina Pages...');
       
-      const pamelaRes = await db.execute("SELECT id FROM alumnos WHERE nombre = 'Pamela' AND apellido = 'Gómez'");
-      const juanRes = await db.execute("SELECT id FROM alumnos WHERE nombre = 'Juan' AND apellido = 'Sánchez'");
-      const pamelaId = pamelaRes.rows[0].id;
-      const juanId = juanRes.rows[0].id;
+      const sabrinaRes = await db.execute("SELECT id FROM alumnos WHERE nombre = 'Sabrina' AND apellido = 'Pages'");
+      if (sabrinaRes.rows.length > 0) {
+        const sabrinaId = sabrinaRes.rows[0].id;
+        const customRoutines = [
+          [sabrinaId, "Día 1 - Piernas (Cuádriceps)", "Hack squat", "4x8-10", 1, "Calentar bien"],
+          [sabrinaId, "Día 1 - Piernas (Cuádriceps)", "Prensa", "3x10-12", 2, ""],
+          [sabrinaId, "Día 2 - Espalda + Bíceps", "Jalón al pecho", "4x8-10", 1, "Controlar bajada"]
+        ];
 
-      const customRoutines = [
-        // Pamela Gomez (5 days)
-        [pamelaId, "Día 1 - Piernas (Cuádriceps)", "Hack squat", "4x8-10", 1, ""],
-        [pamelaId, "Día 1 - Piernas (Cuádriceps)", "Prensa", "3x10-12", 2, ""],
-        [pamelaId, "Día 1 - Piernas (Cuádriceps)", "Extensión de cuádriceps", "3x12-15", 3, ""],
-        [pamelaId, "Día 1 - Piernas (Cuádriceps)", "Hip thrust", "3x10-12", 4, ""],
-        [pamelaId, "Día 1 - Piernas (Cuádriceps)", "Gemelos", "4x15-20", 5, ""],
-        [pamelaId, "Día 1 - Piernas (Cuádriceps)", "Abdominales", "3 series", 6, ""],
-        
-        [pamelaId, "Día 2 - Espalda + Bíceps", "Jalón al pecho", "4x8-10", 1, ""],
-        [pamelaId, "Día 2 - Espalda + Bíceps", "Remo bajo", "4x10", 2, ""],
-        [pamelaId, "Día 2 - Espalda + Bíceps", "Remo unilateral", "3x10-12", 3, ""],
-        [pamelaId, "Día 2 - Espalda + Bíceps", "Face pull", "3x15", 4, ""],
-        [pamelaId, "Día 2 - Espalda + Bíceps", "Curl de bíceps con barra", "3x10-12", 5, ""],
-        [pamelaId, "Día 2 - Espalda + Bíceps", "Curl martillo", "3x12", 6, ""],
-
-        [pamelaId, "Día 3 - Hombros + Pecho", "Press militar", "4x8-10", 1, "Cuidar técnica"],
-        [pamelaId, "Día 3 - Hombros + Pecho", "Elevaciones laterales", "4x15", 2, ""],
-        [pamelaId, "Día 3 - Hombros + Pecho", "Deltoides posteriores", "3x15", 3, ""],
-        [pamelaId, "Día 3 - Hombros + Pecho", "Press pecho maquina", "3x10", 4, ""],
-        [pamelaId, "Día 3 - Hombros + Pecho", "Aperturas peck deck", "3x12", 5, ""],
-        [pamelaId, "Día 3 - Hombros + Pecho", "Plancha", "3x45-60 seg", 6, ""],
-
-        // Juan Sanchez (3 days)
-        [juanId, "Día 1 - Pecho + hombros + tríceps", "Press banca plano", "4x12", 1, "Calentar bien"],
-        [juanId, "Día 1 - Pecho + hombros + tríceps", "Press inclinado (mancuernas)", "4x10", 2, "Cargas ligeras"],
-        [juanId, "Día 1 - Pecho + hombros + tríceps", "Cruces en polea alta", "4x15", 3, ""],
-        [juanId, "Día 1 - Pecho + hombros + tríceps", "Aperturas con mancuernas", "3x12", 4, "Controlar el estiramiento"],
-        [juanId, "Día 1 - Pecho + hombros + tríceps", "Press Militar con mancuernas", "3x10", 5, "OPCIONAL: Solo si no hay molestia, usar peso bajo"],
-        [juanId, "Día 1 - Pecho + hombros + tríceps", "Vuelos laterales en maquina", "4x12", 6, "Movimiento controlado"],
-        [juanId, "Día 1 - Pecho + hombros + tríceps", "Fondos en máquina", "4x12", 7, ""],
-        [juanId, "Día 1 - Pecho + hombros + tríceps", "Press Francés", "4x12", 8, ""],
-        
-        [juanId, "Día 2 - Espalda + hombros + bíceps", "Remo con barra", "4x12", 1, ""],
-        [juanId, "Día 2 - Espalda + hombros + bíceps", "Jalón al pecho", "4x10", 2, ""],
-        [juanId, "Día 2 - Espalda + hombros + bíceps", "Remo bajo (agarre amplio)", "4x15", 3, ""],
-        [juanId, "Día 2 - Espalda + hombros + bíceps", "Remo unilateral", "3x10", 4, ""],
-        [juanId, "Día 2 - Espalda + hombros + bíceps", "Vuelos posteriores", "4x10", 5, ""],
-        [juanId, "Día 2 - Espalda + hombros + bíceps", "Encogimientos con barra", "4x12", 6, ""],
-        [juanId, "Día 2 - Espalda + hombros + bíceps", "Curl de Bíceps unilateral", "4x12", 7, ""],
-        [juanId, "Día 2 - Espalda + hombros + bíceps", "Curl Martillo", "4x12", 8, ""],
-      ];
-      for (const row of customRoutines) {
-        await db.execute({
-          sql: `INSERT INTO rutinas_alumnos (
-            alumno_id, dia, ejercicio, series_repeticiones, orden, notas
-          ) VALUES (?, ?, ?, ?, ?, ?)`,
-          args: row
-        });
+        for (const row of customRoutines) {
+          await db.execute({
+            sql: `INSERT INTO rutinas_alumnos (
+              alumno_id, dia, ejercicio, series_repeticiones, orden, notas
+            ) VALUES (?, ?, ?, ?, ?, ?)`,
+            args: row
+          });
+        }
       }
     }
 
