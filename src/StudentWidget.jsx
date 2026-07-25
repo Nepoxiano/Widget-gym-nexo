@@ -11,6 +11,127 @@ export default function StudentWidget({ onBack }) {
   
   const [activeStudent, setActiveStudent] = useState(null);
   const [activeStudentRoutine, setActiveStudentRoutine] = useState([]);
+  const [pdfDownloadingId, setPdfDownloadingId] = useState(null);
+
+  const loadHtml2Pdf = () => {
+    return new Promise((resolve) => {
+      if (window.html2pdf) {
+        resolve(window.html2pdf);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.onload = () => resolve(window.html2pdf);
+      document.head.appendChild(script);
+    });
+  };
+
+  const handleDownloadPDFDirectly = async (studentId, studentFullName) => {
+    setPdfDownloadingId(studentId);
+    try {
+      const data = await apiClient.get(`/api/alumnos/${studentId}/routine`);
+      const { student, routine } = data;
+      
+      const element = document.createElement('div');
+      element.style.padding = '25px';
+      element.style.color = '#333333';
+      element.style.fontFamily = 'Arial, sans-serif';
+      element.style.fontSize = '12px';
+      element.style.lineHeight = '1.4';
+      
+      element.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #2e7d32; padding-bottom: 12px; margin-bottom: 20px;">
+          <div>
+            <h1 style="color: #2e7d32; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.5px;">NEXO GYM</h1>
+            <p style="margin: 3px 0 0 0; font-size: 13px; color: #666; font-weight: bold;">Rutina de Entrenamiento Personalizada</p>
+          </div>
+          <div style="text-align: right; font-size: 11px; color: #888;">
+            Fecha de descarga: ${new Date().toLocaleDateString('es-AR')}
+          </div>
+        </div>
+        
+        <div style="background: #f8f9fa; border: 1px solid #e9ecef; padding: 15px; border-radius: 6px; margin-bottom: 25px;">
+          <h3 style="margin: 0 0 10px 0; color: #2e7d32; font-size: 14px; border-bottom: 1px solid #e9ecef; padding-bottom: 5px;">Datos del Alumno</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+            <div><strong>Nombre Completo:</strong> ${student.Nombre} ${student.Apellido || ''}</div>
+            <div><strong>Nivel:</strong> ${student.Nivel || '-'}</div>
+            <div><strong>Edad:</strong> ${student.Edad ? `${student.Edad} años` : '-'}</div>
+            <div><strong>Frecuencia:</strong> ${student.DiasEntrenamiento || '-'}</div>
+            <div><strong>Objetivo Principal:</strong> ${student.Objetivo || '-'}</div>
+            <div><strong>Horario de Preferencia:</strong> ${student.Horario || '-'}</div>
+            ${student.Lesionado === 'Sí' ? `
+              <div style="grid-column: span 2; background: #fff5f5; border: 1px solid #ffcdd2; color: #c62828; padding: 8px 10px; border-radius: 4px; margin-top: 5px;">
+                <strong>⚠️ Lesión / Limitación Médica:</strong> ${student.DetalleLesion || 'Sí'}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+      
+      const days = [...new Set(routine.map(r => r.Dia))].sort((a, b) => {
+        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+      });
+      
+      if (days.length === 0) {
+        element.innerHTML += `
+          <div style="text-align: center; padding: 40px; color: #888; border: 1px dashed #ccc; border-radius: 6px;">
+            No hay ejercicios cargados en esta rutina por el momento.
+          </div>
+        `;
+      } else {
+        for (const day of days) {
+          const dayExercises = routine
+            .filter(r => r.Dia === day)
+            .sort((a, b) => (Number(a.Orden) || 0) - (Number(b.Orden) || 0));
+            
+          element.innerHTML += `
+            <div style="margin-top: 25px; page-break-inside: avoid;">
+              <h3 style="background: #2e7d32; color: white; padding: 8px 12px; margin: 0 0 10px 0; border-radius: 4px; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
+                ${day}
+              </h3>
+              <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #2e7d32; background: #f1f3f5; text-align: left; font-weight: bold;">
+                    <th style="padding: 8px; width: 60px; text-align: center;">Orden</th>
+                    <th style="padding: 8px;">Ejercicio</th>
+                    <th style="padding: 8px; width: 140px;">Series x Repeticiones</th>
+                    <th style="padding: 8px;">Notas / Indicaciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${dayExercises.map(ex => `
+                    <tr style="border-bottom: 1px solid #dee2e6;">
+                      <td style="padding: 8px; text-align: center; font-weight: bold; color: #2e7d32;">${ex.Orden}</td>
+                      <td style="padding: 8px; font-weight: 600;">${ex.Ejercicio}</td>
+                      <td style="padding: 8px; color: #212529;">${ex.Series_Repeticiones}</td>
+                      <td style="padding: 8px; color: #6c757d; font-style: italic;">${ex.Notas || '-'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+      }
+      
+      const html2pdf = await loadHtml2Pdf();
+      const opt = {
+        margin: 10,
+        filename: `Rutina_${student.Nombre.replace(/\s+/g, '_')}_${(student.Apellido || '').replace(/\s+/g, '_')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2.5, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      
+      await html2pdf().set(opt).from(element).save();
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      alert('Error al descargar el PDF de la rutina.');
+    } finally {
+      setPdfDownloadingId(null);
+    }
+  };
+
   const [activeTab, setActiveTab] = useState('');
   const [completedExercises, setCompletedExercises] = useState({});
   const [loading, setLoading] = useState(false);
@@ -227,9 +348,23 @@ export default function StudentWidget({ onBack }) {
                         Nexo Gym - Alumno Activo
                       </div>
                     </div>
-                    <span className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
-                      Ver Rutina
-                    </span>
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                      <button 
+                        className="btn btn-success" 
+                        style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.25rem', height: 'fit-content' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadPDFDirectly(student.id, `${student.Nombre} ${student.Apellido}`);
+                        }}
+                        disabled={pdfDownloadingId === student.id}
+                        title="Descargar Rutina en PDF directamente"
+                      >
+                        {pdfDownloadingId === student.id ? '⏳' : '📥'} PDF
+                      </button>
+                      <span className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
+                        Ver Rutina
+                      </span>
+                    </div>
                   </div>
                 ))
               ) : (
