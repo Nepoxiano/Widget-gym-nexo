@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from './apiClient';
+const OBJETIVOS_DISPONIBLES = ["Hipertrofia", "Tonificación", "Mejor resistencia", "Aumentar fuerza", "Perder peso", "Rehabilitación", "Rendimiento deportivo"];
 
 export default function AdminWidget({ onLogout }) {
   const [alumnos, setAlumnos] = useState([]);
@@ -1068,19 +1069,53 @@ export default function AdminWidget({ onLogout }) {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label>Objetivo Principal</label>
-              <select className="input-control" value={newStudentForm.Objetivo} onChange={e => setNewStudentForm({...newStudentForm, Objetivo: e.target.value})}>
-                <option value="Hipertrofia">Hipertrofia</option>
-                <option value="Tonificación">Tonificación</option>
-                <option value="Mejor resistencia">Mejor resistencia</option>
-                <option value="Aumentar fuerza">Aumentar fuerza</option>
-                <option value="Perder peso">Perder peso</option>
-                <option value="Rehabilitación">Rehabilitación</option>
-                <option value="Rendimiento deportivo">Rendimiento deportivo</option>
-              </select>
+          {/* Objetivos Principales (Checkboxes, Max 3) */}
+          <div className="form-group">
+            <label>Objetivos Principales (Elige hasta 3)</label>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', 
+              gap: '0.5rem', 
+              marginTop: '0.5rem', 
+              background: 'var(--bg-card)', 
+              padding: '0.75rem', 
+              borderRadius: 'var(--radius-sm)', 
+              border: '1px solid var(--border)' 
+            }}>
+              {OBJETIVOS_DISPONIBLES.map(obj => {
+                const selectedObjectives = newStudentForm.Objetivo ? newStudentForm.Objetivo.split(', ').filter(Boolean) : [];
+                const isChecked = selectedObjectives.includes(obj);
+                return (
+                  <label key={obj} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal', cursor: 'pointer', fontSize: '0.85rem' }}>
+                    <input 
+                      type="checkbox"
+                      checked={isChecked}
+                      disabled={!isChecked && selectedObjectives.length >= 3}
+                      onChange={(e) => {
+                        let updated;
+                        if (e.target.checked) {
+                          if (selectedObjectives.length < 3) {
+                            updated = [...selectedObjectives, obj];
+                          } else {
+                            return;
+                          }
+                        } else {
+                          updated = selectedObjectives.filter(o => o !== obj);
+                        }
+                        setNewStudentForm({
+                          ...newStudentForm,
+                          Objetivo: updated.join(', ')
+                        });
+                      }}
+                    />
+                    {obj}
+                  </label>
+                );
+              })}
             </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
             <div className="form-group">
               <label>¿Lesionado?</label>
               <select className="input-control" value={newStudentForm.Lesionado} onChange={e => setNewStudentForm({...newStudentForm, Lesionado: e.target.value})}>
@@ -1194,19 +1229,53 @@ export default function AdminWidget({ onLogout }) {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label>Objetivo Principal</label>
-              <select className="input-control" value={editForm.Objetivo || 'Hipertrofia'} onChange={e => setEditForm({...editForm, Objetivo: e.target.value})}>
-                <option value="Hipertrofia">Hipertrofia</option>
-                <option value="Tonificación">Tonificación</option>
-                <option value="Mejor resistencia">Mejor resistencia</option>
-                <option value="Aumentar fuerza">Aumentar fuerza</option>
-                <option value="Perder peso">Perder peso</option>
-                <option value="Rehabilitación">Rehabilitación</option>
-                <option value="Rendimiento deportivo">Rendimiento deportivo</option>
-              </select>
+          {/* Objetivos Principales (Checkboxes, Max 3) */}
+          <div className="form-group">
+            <label>Objetivos Principales (Elige hasta 3)</label>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', 
+              gap: '0.5rem', 
+              marginTop: '0.5rem', 
+              background: 'var(--bg-card)', 
+              padding: '0.75rem', 
+              borderRadius: 'var(--radius-sm)', 
+              border: '1px solid var(--border)' 
+            }}>
+              {OBJETIVOS_DISPONIBLES.map(obj => {
+                const selectedObjectives = editForm.Objetivo ? editForm.Objetivo.split(', ').filter(Boolean) : [];
+                const isChecked = selectedObjectives.includes(obj);
+                return (
+                  <label key={obj} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal', cursor: 'pointer', fontSize: '0.85rem' }}>
+                    <input 
+                      type="checkbox"
+                      checked={isChecked}
+                      disabled={!isChecked && selectedObjectives.length >= 3}
+                      onChange={(e) => {
+                        let updated;
+                        if (e.target.checked) {
+                          if (selectedObjectives.length < 3) {
+                            updated = [...selectedObjectives, obj];
+                          } else {
+                            return;
+                          }
+                        } else {
+                          updated = selectedObjectives.filter(o => o !== obj);
+                        }
+                        setEditForm({
+                          ...editForm,
+                          Objetivo: updated.join(', ')
+                        });
+                      }}
+                    />
+                    {obj}
+                  </label>
+                );
+              })}
             </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
             <div className="form-group">
               <label>¿Lesionado?</label>
               <select className="input-control" value={editForm.Lesionado || 'No'} onChange={e => setEditForm({...editForm, Lesionado: e.target.value})}>
