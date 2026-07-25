@@ -27,7 +27,7 @@ async function ensureDb() {
 }
 
 // Global middleware to verify DB initialization
-app.use('*', async (c, next) => {
+app.use('*', async (_c, next) => {
   await ensureDb();
   await next();
 });
@@ -138,7 +138,7 @@ app.post('/api/auth/login', async (c) => {
 app.get('/api/alumnos/search', async (c) => {
   try {
     const res = await db.execute("SELECT id, nombre, apellido, estado FROM alumnos WHERE estado = 'Alta'");
-    const alumnos = res.rows.map(row => ({
+    const alumnos = res.rows.map((row: any) => ({
       id: Number(row.id),
       ID: String(row.id),
       Nombre: String(row.nombre),
