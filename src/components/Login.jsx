@@ -112,11 +112,6 @@ export default function Login({ onLoginSuccess }) {
             {loading ? 'Iniciando sesión...' : 'Ingresar'}
           </button>
         </form>
-
-        <div style={{ marginTop: '2rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          <p>Profesor de prueba: <strong>talia</strong></p>
-          <p>Contraseña: <strong>nexo2026</strong></p>
-        </div>
       </div>
     </div>
   );
