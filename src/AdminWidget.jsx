@@ -762,7 +762,6 @@ export default function AdminWidget({ onLogout }) {
             <tr>
               <th>Alumno</th>
               <th>DNI</th>
-              <th>Celular</th>
               <th>Email</th>
               <th>Dirección</th>
               <th>Horario</th>
@@ -778,7 +777,6 @@ export default function AdminWidget({ onLogout }) {
                 <tr key={student.id}>
                   <td><strong>{student.Nombre} {student.Apellido}</strong></td>
                   <td>{student.Dni || '-'}</td>
-                  <td>{student.Celular || '-'}</td>
                   <td><span style={{ fontSize: '0.8rem' }}>{student.Mail || '-'}</span></td>
                   <td><span style={{ fontSize: '0.8rem' }}>{student.Direccion || '-'}</span></td>
                   <td>{student.Horario}</td>
@@ -1019,14 +1017,10 @@ export default function AdminWidget({ onLogout }) {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div className="form-group">
               <label>DNI</label>
               <input type="text" className="input-control" placeholder="Ej: 38123456" value={newStudentForm.Dni} onChange={e => setNewStudentForm({...newStudentForm, Dni: e.target.value})} />
-            </div>
-            <div className="form-group">
-              <label>Celular</label>
-              <input type="text" className="input-control" placeholder="Ej: 1123456789" value={newStudentForm.Celular} onChange={e => setNewStudentForm({...newStudentForm, Celular: e.target.value})} />
             </div>
             <div className="form-group">
               <label>Edad</label>
@@ -1149,14 +1143,10 @@ export default function AdminWidget({ onLogout }) {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div className="form-group">
               <label>DNI</label>
               <input type="text" className="input-control" value={editForm.Dni || ''} onChange={e => setEditForm({...editForm, Dni: e.target.value})} />
-            </div>
-            <div className="form-group">
-              <label>Celular</label>
-              <input type="text" className="input-control" value={editForm.Celular || ''} onChange={e => setEditForm({...editForm, Celular: e.target.value})} />
             </div>
             <div className="form-group">
               <label>Edad</label>
