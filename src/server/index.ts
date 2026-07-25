@@ -289,15 +289,6 @@ app.put('/api/admin/alumnos/:id', async (c) => {
     return c.json({ error: err.message }, 500);
   }
 });
-      sql: 'SELECT * FROM alumnos WHERE id = ?',
-      args: [id]
-    });
-
-    return c.json(mapAlumno(updatedRes.rows[0]));
-  } catch (err: any) {
-    return c.json({ error: err.message }, 500);
-  }
-});
 
 // Delete student
 app.delete('/api/admin/alumnos/:id', async (c) => {
